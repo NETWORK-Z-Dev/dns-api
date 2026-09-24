@@ -26,7 +26,12 @@ export async function saveConfig(){
 
 function checkConfig(){
     JSONTools.checkObjectKeys(configObj, "settings.cloudflare.url", "https://api.cloudflare.com/client/v4", true)
-    JSONTools.checkObjectKeys(configObj, "settings.cloudflare.account_id", "", true)
     JSONTools.checkObjectKeys(configObj, "settings.cloudflare.api_token", "", true)
     JSONTools.checkObjectKeys(configObj, "settings.web.port", 5001, true)
+
+    JSONTools.checkObjectKeys(configObj, "settings.db.user", "", true)
+    JSONTools.checkObjectKeys(configObj, "settings.db.pass", "", true)
+    JSONTools.checkObjectKeys(configObj, "settings.db.host", "127.0.0.1", true)
+    JSONTools.checkObjectKeys(configObj, "settings.db.db", "dnsapi", true)
+    JSONTools.checkObjectKeys(configObj, "settings.db.port", 3306, true)
 }

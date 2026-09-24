@@ -1,7 +1,32 @@
 {
+  "name": "dns-api",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/NETWORK-Z-Dev/dns-api#readme",
+  "bugs": {
+    "url": "https://github.com/NETWORK-Z-Dev/dns-api/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NETWORK-Z-Dev/dns-api.git"
+  },
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "postinstall": "bun postinstall.mjs"
+  },
   "dependencies": {
+    "argon2": "^0.45.1",
     "express": "^5.2.1",
+    "mysql2": "^3.24.4",
     "socket.io": "^4.8.3",
     "yaml": "^2.9.1"
-  }
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "module": "index.mjs"
 }
