@@ -1,0 +1,8 @@
+{
+    "packages": {
+        "@hackthedev/express-starter": "1.1.2",
+        "@hackthedev/terminal-logger": "1.0.6",
+        "@hackthedev/arraytools": "1.0.2",
+        "@hackthedev/json-tools": "1.1.0"
+    }
+}
