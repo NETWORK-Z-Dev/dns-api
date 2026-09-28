@@ -1,4 +1,4 @@
-import {startWebServer} from "./modules/functions/init/web.mjs"
+import {installWebLibs, startWebServer} from "./modules/functions/init/web.mjs"
 import { initConfig } from "./modules/functions/init/config.mjs"
 import { addDnsToZone, getDomainZoneInfo, getZoneDns, getZoneDnsEntry, removeDnsFromZone } from "./modules/functions/api/cloudflare.mjs"
 import {initDatabase} from "./modules/functions/init/sql.mjs";
@@ -7,6 +7,7 @@ import {registerDnsEndpoints} from "./modules/functions/api/dns.mjs";
 
 await initConfig();
 await initDatabase();
+await installWebLibs();
 await startWebServer();
 
 await registerAccountEndpoints();

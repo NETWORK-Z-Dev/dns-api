@@ -65,6 +65,34 @@ async function removeDnsRecord({
             console.error(await result.json());
         } catch {}
 
-        throw new Error("Unable to remvoe account");
+        throw new Error("Unable to remove account");
+    }
+}
+
+async function getDnsRecords() {
+    if(!getSessionId()) throw new Error("Missing sessionId")
+
+    let result = await fetch("/dns/get", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            sessionId: getSessionId(),
+        })
+    })
+
+    let dnsData = null;
+    try{
+        dnsData = await result.json();
+        return dnsData;
+    } catch {}
+
+    if (result.status !== 200) {
+        console.error("Unable to get dns", dnsData)
+        throw new Error("Unable to get dns " + dnsData);
+    }
+    else if(result.status === 200){
+        return dnsData;
     }
 }

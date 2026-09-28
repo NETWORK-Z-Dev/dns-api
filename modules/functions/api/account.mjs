@@ -11,6 +11,11 @@ export function getUUID(){
     return crypto.randomUUID();
 }
 
+export function getIdentifierFromSessionId(sessionId){
+    if(!sessionId) throw new Error("Missing session id")
+    return sessions.get(sessionId)?.email ?? null;
+}
+
 export async function getAccountFromDb(identifier){
     if(!identifier) throw new Error("Identifier not provided");
 

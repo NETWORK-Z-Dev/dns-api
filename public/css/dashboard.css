@@ -1,0 +1,32 @@
+:root {
+    --table-header-backcolor: #a8e5fd;
+    --table-border: 1px solid rgb(0 0 0 / 0.2);
+    --table-padding: 0.5rem 1rem;
+}
+
+table.dns {
+    border-collapse: collapse;
+    overflow: hidden;
+}
+table.dns td{
+    padding: var(--table-padding);
+    border:  var(--table-border);
+}
+
+table.dns th {
+    background-color: var(--table-header-backcolor);
+    border: var(--table-border);
+    padding: var(--table-padding);
+}
+
+
+.dashboard {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    margin: auto;
+    margin-top: 0;
+
+    align-items: center;
+
+}

@@ -1,4 +1,11 @@
-import {getAccountFromDb, getUUID, insertAccountIntoDb, verifyAccount, verifySessionId} from "./account.mjs";
+import {
+    getAccountFromDb,
+    getIdentifierFromSessionId,
+    getUUID,
+    insertAccountIntoDb,
+    verifyAccount,
+    verifySessionId
+} from "./account.mjs";
 import {db} from "../init/sql.mjs";
 import {starter} from "../init/web.mjs";
 import {addDnsToZone, getZoneDnsEntry, removeDnsFromZone} from "./cloudflare.mjs";
@@ -166,15 +173,14 @@ export async function registerDnsEndpoints(){
         }),
         starter.express.json(),
         async (req, res) => {
-            const {email, sessionId, name, domain} = req?.body;
-
-            if(!email) return res.status(400).json({error: "Email is missing"});
+            const {sessionId} = req?.body;
             if(!sessionId) return res.status(400).json({error: "Session is missing"});
-            if(!domain) return res.status(400).json({error: "domain is missing"});
 
             let isValid = await verifySessionId(sessionId);
             if(!isValid) return res.status(400).json({error: "Invalid session"});
 
-            return res.status(200).json({ error: null, records: await getAccountDnsRecords()})
+            let sessionEmail = getIdentifierFromSessionId(sessionId);
+
+            return res.status(200).json({ error: null, records: await getAccountDnsRecords(sessionEmail)})
         })
 }
