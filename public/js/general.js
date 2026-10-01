@@ -1,8 +1,9 @@
 let customPrompts = null;
 
-document.addEventListener("DOMContentLoaded", function(e) {
+document.addEventListener("DOMContentLoaded", async function(e) {
     customPrompts = new Prompt();
-    addHeaderLinks();
+    await updateHeaderLinks();
+    await renderDashboard()
 })
 
 function applyHoverEffect(){

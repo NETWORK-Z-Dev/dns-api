@@ -76,7 +76,7 @@ export async function registerAccountEndpoints(){
     starter.app.post('/account/register', rateLimiter.middleware({
         getIpLimit: async () => 5,
         getTotalLimit: async () => 50,
-        getBlockUntil: async () => new Date(Date.now() + 5 * 60_000)
+        getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
     }),
         starter.express.json(),
         async (req, res) => {
@@ -103,7 +103,7 @@ export async function registerAccountEndpoints(){
     starter.app.post('/account/login', rateLimiter.middleware({
         getIpLimit: async () => 5,
         getTotalLimit: async () => 50,
-        getBlockUntil: async () => new Date(Date.now() + 5 * 60_000)
+        getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
     }),
         starter.express.json(),
         async (req, res) => {
@@ -131,13 +131,25 @@ export async function registerAccountEndpoints(){
             }
     })
 
-    starter.app.get('/account/', rateLimiter.middleware({
+    starter.app.post('/account/', rateLimiter.middleware({
         getIpLimit: async () => 5,
         getTotalLimit: async () => 50,
-        getBlockUntil: async () => new Date(Date.now() + 5 * 60_000)
+        getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
     }),
         starter.express.json(),
         async (req, res) => {
 
+            const {sessionId} = req?.body;
+
+            if(!sessionId) return res.status(400).json({error: "Session id is missing"});
+            if(!verifySessionId(sessionId)) return res.status(400).json({error: "Invalid session"});
+
+            let sessionEmail = getIdentifierFromSessionId(sessionId);
+            if(!sessionEmail) return res.status(400).json({error: "Email not found in account"});
+
+            let account = await getAccountFromDb(sessionEmail);
+            if(!account) return res.status(400).json({error: "Account doesnt exist!"});
+
+            return res.status(200).json({ error: null, account });
     })
 }

@@ -6,9 +6,10 @@ function getHeaderLinksElement(){
     return document.querySelector(".header .links");
 }
 
-function addHeaderLinks() {
-
-    if(!getSessionId()) getHeaderLinksElement().insertAdjacentHTML("beforeend", `<a class="action" onClick="registerPrompt()">Register</a>`)
-    if(!getSessionId()) getHeaderLinksElement().insertAdjacentHTML("beforeend", ` <a class="action" onClick="loginPrompt()">Login</a>`)
-    if(getSessionId()) getHeaderLinksElement().insertAdjacentHTML("beforeend", `<a class="action" onClick="renderDashboard();">Dashboard</a>`)
+async function updateHeaderLinks() {
+    let isLoggedIn = await testLogin();
+    getHeaderLinksElement().innerHTML ="";
+    if(!isLoggedIn) getHeaderLinksElement().insertAdjacentHTML("beforeend", `<a class="action" onClick="registerPrompt()">Register</a>`)
+    if(!isLoggedIn) getHeaderLinksElement().insertAdjacentHTML("beforeend", ` <a class="action" onClick="loginPrompt()">Login</a>`)
+    if(isLoggedIn) getHeaderLinksElement().insertAdjacentHTML("beforeend", `<a class="action" onClick="renderDashboard();">Dashboard</a>`)
 }

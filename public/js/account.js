@@ -28,10 +28,51 @@ async function registerAccount({
             password
         })
 
+        await updateHeaderLinks();
         return !!login?.uuid;
     }
 
     return false;
+}
+
+async function testLogin(){
+    try{
+        let accountLoginTest = await getAccount();
+        return !accountLoginTest?.error;
+    } catch{
+        return false;
+    }
+}
+
+async function getAccount(){
+    if(!getSessionId()) throw new Error("Missing session id for account login")
+
+    let result = await fetch("/account/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            sessionId: getSessionId()
+        })
+    })
+
+    let jsonData = null;
+    if(result.status !== 200){
+        try{
+            jsonData = await result.json();
+        } catch {}
+
+        console.error("Unable to get account: ", jsonData?.error)
+    }else{
+        jsonData = await result.json();
+    }
+
+    if(jsonData?.account) {
+        return jsonData?.account;
+    }
+
+    return jsonData;
 }
 
 async function loginAccount({
@@ -66,7 +107,11 @@ async function loginAccount({
         jsonData = await result.json();
     }
 
-    if(jsonData?.uuid) setSessionId(jsonData.uuid)
+    if(jsonData?.uuid) {
+        setSessionId(jsonData.uuid)
+        localStorage.setItem("email", email);
+        await updateHeaderLinks();
+    }
     return jsonData;
 }
 
@@ -132,7 +177,7 @@ async function loginPrompt(error = null){
             <div class="error-text" style="display: ${error ? "flex" : "none"}">${error ?? ""}</div>
             <div class="prompt-form-group">
                 <label class="prompt-label" for="email">Email</label>
-                <input class="prompt-input" type="text" name="email">
+                <input class="prompt-input" type="text" name="email" value="${localStorage.getItem("email") ?? ""}">
             </div>
     
             <div class="prompt-form-group">

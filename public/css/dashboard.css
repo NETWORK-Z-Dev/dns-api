@@ -19,6 +19,11 @@ table.dns th {
     padding: var(--table-padding);
 }
 
+td.row{
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+}
 
 .dashboard {
     display: flex;
@@ -28,5 +33,47 @@ table.dns th {
     margin-top: 0;
 
     align-items: center;
+}
 
+.dashboard span.action{
+    min-width: 24px;
+    min-height: 24px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.dashboard .cards{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+    margin: 2rem auto;
+}
+.dashboard .card{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    border: 1.5px solid rgb(128 128 128 / 0.2);
+    border-radius: 0.5rem;
+    padding: 1rem 1.5rem;
+
+    box-shadow: 6px 6px 10px 4px rgb(0 0 0 / 0.1);
+    transition: all 200ms ease-in-out;
+    overflow: hidden;
+}
+.dashboard .card:hover{
+    box-shadow: 6px 6px 10px 4px rgb(0 0 0 / 0.2);
+    transform: translateY(-2%);
+}
+
+.dashboard .card h2{
+    margin: 0;
+    font-size: 18px;
+}
+.dashboard .card p{
+    margin: 0;
+    font-size: 14px;
 }

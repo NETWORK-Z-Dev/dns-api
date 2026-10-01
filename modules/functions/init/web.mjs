@@ -23,6 +23,8 @@ export async function installWebLibs(){
     // installing multiple packages
     const results = await FrontendLibs.installMultiple([
         { package: '@hackthedev/prompts@1.0.1', path: libDir },
+        { package: '@hackthedev/prompts@1.0.1', path: libDir },
+        { package: '@hackthedev/chat-tools@1.0.1', path: libDir },
     ]);
 
     results.forEach((r) => {

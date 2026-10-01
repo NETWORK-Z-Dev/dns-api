@@ -8,7 +8,7 @@ import {
 } from "./account.mjs";
 import {db} from "../init/sql.mjs";
 import {starter} from "../init/web.mjs";
-import {addDnsToZone, getZoneDnsEntry, removeDnsFromZone} from "./cloudflare.mjs";
+import {addDnsToZone, checkDnsName, getZoneDnsEntry, removeDnsFromZone} from "./cloudflare.mjs";
 import dSyncRateLimit from "@hackthedev/dsync-ratelimit";
 
 const rateLimiter = new dSyncRateLimit();
@@ -94,7 +94,7 @@ export async function registerDnsEndpoints(){
     starter.app.post('/dns/register', rateLimiter.middleware({
             getIpLimit: async () => 5,
             getTotalLimit: async () => 50,
-            getBlockUntil: async () => new Date(Date.now() + 5 * 60_000)
+            getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
         }),
         starter.express.json(),
         async (req, res) => {
@@ -136,7 +136,7 @@ export async function registerDnsEndpoints(){
     starter.app.delete('/dns/delete', rateLimiter.middleware({
             getIpLimit: async () => 5,
             getTotalLimit: async () => 50,
-            getBlockUntil: async () => new Date(Date.now() + 5 * 60_000)
+            getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
         }),
         starter.express.json(),
         async (req, res) => {
@@ -166,10 +166,35 @@ export async function registerDnsEndpoints(){
             }
         })
 
+    starter.app.put('/dns/update', rateLimiter.middleware({
+            getIpLimit: async () => 5,
+            getTotalLimit: async () => 50,
+            getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
+        }),
+        starter.express.json(),
+        async (req, res) => {
+            const {sessionId, domainName, oldName, newName, newValue} = req?.body;
+            if(!sessionId) return res.status(400).json({error: "Session is missing"});
+            if(!domainName) return res.status(400).json({error: "Domain name is missing"});
+            if(!oldName) return res.status(400).json({error: "Old name is missing"});
+            if(!newName) return res.status(400).json({error: "New name is missing"});
+            if(!newValue) return res.status(400).json({error: "new value is missing"});
+
+            if(!checkDnsName(oldName)) return res.status(400).json({error: "Session is missing"});
+            if(!checkDnsName(newName)) return res.status(400).json({error: "Session is missing"});
+
+            let isValid = await verifySessionId(sessionId);
+            if(!isValid) return res.status(400).json({error: "Invalid session"});
+
+            let sessionEmail = getIdentifierFromSessionId(sessionId);
+
+            return res.status(200).json({ error: null, records: await getAccountDnsRecords(sessionEmail)})
+        })
+
     starter.app.post('/dns/get', rateLimiter.middleware({
             getIpLimit: async () => 5,
             getTotalLimit: async () => 50,
-            getBlockUntil: async () => new Date(Date.now() + 5 * 60_000)
+            getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
         }),
         starter.express.json(),
         async (req, res) => {

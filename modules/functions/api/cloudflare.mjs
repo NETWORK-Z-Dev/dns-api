@@ -10,6 +10,26 @@ function getApiHeader(){
     }
 }
 
+export function checkDnsName(name){
+    if(!name) throw new Error("Missing name for dns name check")
+
+    let prohibitedNames = [
+        "official",
+        "support",
+        "@",
+        "",
+        "admin",
+        "staff",
+        "contact",
+        "mail",
+        "email",
+        "office",
+        "service",
+    ]
+
+    return !prohibitedNames.includes(name);
+}
+
 export async function getDomainZoneInfo(domainName){
     if(!domainName) throw new Error("Domain Name required!");
 
@@ -143,6 +163,54 @@ export async function removeDnsFromZone(domainName, name){
         return {
             response,
             error: `Unable to delete dns entry ${name} for zone ${zoneInfo.id}`,
+            zoneId: zoneInfo.id,
+        }
+    }
+
+    return true
+}
+
+export async function updateDnsFromZone({
+    domainName = null,
+    oldName = null,
+    newName = null,
+    newValue = null,
+    newComment = null,
+                                        }){
+    if(!domainName) throw new Error("Missing domain name");
+    if(!oldName) throw new Error("Missing domain name");
+    if(!newName) throw new Error("Missing domain name");
+    if(!newValue) throw new Error("Missing domain name");
+    if(!newComment) throw new Error("Missing domain name");
+
+    let zoneInfo = await getDomainZoneInfo(domainName);
+    let zoneEntry = await getZoneDnsEntry(domainName, name)
+
+    if(!zoneEntry?.id) {
+        return {
+            error: "Zone entry not found"
+        }
+    }
+
+    let response = await fetch(`${configObj.settings.cloudflare.url}/zones/${zoneInfo?.id}/dns_records/${zoneEntry.id}`, {
+        method: "PUT",
+        signal: AbortSignal.timeout(2500),
+        ...getApiHeader(),
+        body: JSON.stringify({
+            name,
+            comment: newComment,
+            content: newValue,
+            proxied: false,
+        })
+    });
+
+    if(response.status !== 200){
+        Logger.error(`Unable to update dns entry ${name} for zone ${zoneInfo.id}`)
+        Logger.error(response.status);
+
+        return {
+            response,
+            error: `Unable to update dns entry ${name} for zone ${zoneInfo.id}`,
             zoneId: zoneInfo.id,
         }
     }
