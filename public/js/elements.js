@@ -12,4 +12,5 @@ async function updateHeaderLinks() {
     if(!isLoggedIn) getHeaderLinksElement().insertAdjacentHTML("beforeend", `<a class="action" onClick="registerPrompt()">Register</a>`)
     if(!isLoggedIn) getHeaderLinksElement().insertAdjacentHTML("beforeend", ` <a class="action" onClick="loginPrompt()">Login</a>`)
     if(isLoggedIn) getHeaderLinksElement().insertAdjacentHTML("beforeend", `<a class="action" onClick="renderDashboard();">Dashboard</a>`)
+    if(isLoggedIn) getHeaderLinksElement().insertAdjacentHTML("beforeend", `<a class="action" onClick="apiKeyPopup();">API</a>`)
 }

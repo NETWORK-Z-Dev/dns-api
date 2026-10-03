@@ -1,10 +1,8 @@
 async function registerDnsRecord({
-                                     email = null,
                                      domain = null,
                                      name = null,
                                      value = null,
                                  } = {}) {
-    if (!email) throw new Error("Missing email")
     if (!domain) throw new Error("Missing domain")
     if (!name) throw new Error("Missing record name")
     if (!value) throw new Error("Missing record value")
@@ -16,7 +14,6 @@ async function registerDnsRecord({
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            email,
             domain,
             name,
             value,
@@ -164,8 +161,7 @@ async function addDnsRecordPrompt(error = null){
             if(values?.name?.trim()?.length > 0 && values?.content?.trim()?.length > 0){
                 try{
                     await registerDnsRecord({
-                        email: "your-mom.at",
-                        domain: "lets-yap.online",
+                        domain: values?.domain,
                         name: values?.name?.trim(),
                         value: values?.content?.trim()
                     });

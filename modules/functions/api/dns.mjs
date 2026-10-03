@@ -101,9 +101,7 @@ export async function registerDnsEndpoints(){
         }),
         starter.express.json(),
         async (req, res) => {
-            const {email, sessionId, name, domain, value} = req?.body;
-
-            if(!email) return res.status(400).json({error: "Email is missing"});
+            const { sessionId, name, domain, value} = req?.body;
             if(!sessionId) return res.status(400).json({error: "Session is missing"});
             if(!domain) return res.status(400).json({error: "domain is missing"});
             if(!value) return res.status(400).json({error: "value is missing"});
@@ -111,23 +109,26 @@ export async function registerDnsEndpoints(){
             let isValid = await verifySessionId(sessionId);
             if(!isValid) return res.status(400).json({error: "Invalid session"});
 
-            let account = await getAccountFromDb(email);
-            let existingAccountRecordCount = await getAccountDnsCount(email);
+            let sessionEmail = getIdentifierFromSessionId(sessionId);
+            if(!sessionEmail) return res.status(400).json({error: "Email not found in account"});
+
+            let account = await getAccountFromDb(sessionEmail);
+            let existingAccountRecordCount = await getAccountDnsCount(sessionEmail);
             if(existingAccountRecordCount >= account.max_subdomains){
                 return res.status(400).json({error: `Account DNS limit of ${account.max_subdomains} reached!`});
             }
 
-            let existingRecord = await getAccountDnsRecord(email, domain, name)
+            let existingRecord = await getAccountDnsRecord(sessionEmail, domain, name)
             let existingDnsRecord = await getZoneDnsEntry(domain, name)
             if(!existingRecord && !existingDnsRecord) {
                 // local so we know which account is who
-                let regRes = await registerAccountDnsRecord(email, domain, name, value)
+                let regRes = await registerAccountDnsRecord(sessionEmail, domain, name, value)
                 if(regRes === false) return res.status(500).json({error: "Unable to register record"});
 
                 // cloudflare
-                let dnsRecordReg = await addDnsToZone(domain, name, value, `${email}`)
+                let dnsRecordReg = await addDnsToZone(domain, name, value, `${sessionEmail}`)
                 if(dnsRecordReg === false) {
-                    await deleteAccountDnsRecord(email, domain, name) // undo on cf error
+                    await deleteAccountDnsRecord(sessionEmail, domain, name) // undo on cf error
                     return res.status(500).json({error: "Unable to register dns record"});
                 }
 
@@ -155,7 +156,7 @@ export async function registerDnsEndpoints(){
             if(!isValid) return res.status(400).json({error: "Invalid session"});
 
             let sessionEmail = getIdentifierFromSessionId(sessionId);
-
+            if(!sessionEmail) return res.status(400).json({error: "Email not found in account"});
 
             let existingRecord = await getAccountDnsRecord(sessionEmail, domain, name)
             let existingDnsRecord = await getZoneDnsEntry(domain, name)

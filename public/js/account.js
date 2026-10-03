@@ -245,3 +245,59 @@ async function loginPrompt(error = null) {
         ["Login", null],
     );
 }
+
+async function apiKeyPopup(error = null) {
+    if (!getSessionId()) return
+
+    customPrompts.showConfirm(
+        {
+            title: "Create API Key",
+            text: `
+            <p>You can create an api key to have an application automatically setup your records.</p><br>
+            
+            <p>Please Note:</p>
+            <ul>
+                <li>When creating an API key you wont be able to view it again after creation!</li>
+                <li>If you aleady created an API key before the old one will be invalid if you proceed!</li>
+            </ul
+            `
+        },
+        [
+            ["Yes, create it!", "error"],
+            ["No cancel!", "gray"]
+        ], // html to display
+        async (values) => { // on submit callback
+            // values are based on the 'name' property of elements
+
+            if (values === "yes, create it!") {
+                let apiKey = await generateAccountApiKey()
+                if(apiKey){
+                    await customPrompts.closePrompt();
+                    showApiKey(apiKey)
+                }
+            }
+        }
+    );
+}
+
+async function showApiKey(key) {
+    if (!getSessionId()) return
+
+    customPrompts.showConfirm(
+        {
+            title: "Your API Key",
+            text: `
+            <p>Your API key has been generated!</p>
+            <p>Keep it save and store it if needed because you wont be able to see it again!</p><br>
+            
+            <p>Your key:</p>
+            <code>${key}</code>
+            `
+        },
+        [
+            ["Got it!", "success"]
+        ], // html to display
+        async (values) => {
+        }
+    );
+}
