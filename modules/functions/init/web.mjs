@@ -6,6 +6,10 @@ import ExpressStarter from "@hackthedev/express-starter"
 import FrontendLibs from "@hackthedev/frontend-libs";
 export const starter = new ExpressStarter()
 
+export let rateLimitBlockTime = new Date(Date.now() + (5 * 60_000))
+export let maxIpLimit = 50;
+export let totalReqLimit = 200;
+
 export async function startWebServer(){
     starter.registerErrorHandlers(); 
     starter.registerTemplateMiddleware(); 

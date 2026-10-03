@@ -33,6 +33,9 @@ async function registerDnsRecord({
 
         throw new Error("Unable to register account");
     }
+    else if(result.status === 200){
+        await updateDashboardDnsTable();
+    }
 }
 
 async function removeDnsRecord({
@@ -40,7 +43,6 @@ async function removeDnsRecord({
                                      domain = null,
                                      name = null,
                                  } = {}) {
-    if (!email) throw new Error("Missing email")
     if (!domain) throw new Error("Missing domain")
     if (!name) throw new Error("Missing record name")
     if(!getSessionId()) throw new Error("Missing sessionId")
@@ -51,7 +53,6 @@ async function removeDnsRecord({
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            email,
             domain,
             name,
             sessionId: getSessionId(),
@@ -65,7 +66,10 @@ async function removeDnsRecord({
             console.error(await result.json());
         } catch {}
 
-        throw new Error("Unable to remove account");
+        throw new Error("Unable to remove dns record");
+    }
+    else if(result.status === 200){
+        await updateDashboardDnsTable();
     }
 }
 
@@ -85,7 +89,6 @@ async function getDnsRecords() {
     let dnsData = null;
     try{
         dnsData = await result.json();
-        return dnsData;
     } catch {}
 
     if (result.status !== 200) {
@@ -95,4 +98,118 @@ async function getDnsRecords() {
     else if(result.status === 200){
         return dnsData;
     }
+}
+
+async function getDomains() {
+    if(!getSessionId()) throw new Error("Missing sessionId")
+
+    let result = await fetch("/dns/domains/get", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            sessionId: getSessionId(),
+        })
+    })
+
+    let domainData = null;
+    try{
+        domainData = await result.json();
+    } catch {}
+
+    if (result.status !== 200) {
+        console.error("Unable to get domains", domainData)
+        throw new Error("Unable to get domains " + domainData);
+    }
+    else if(result.status === 200){
+        return domainData?.domains;
+    }
+}
+
+async function addDnsRecordPrompt(error = null){
+    if(!getSessionId()) return
+
+    let domains = await getDomains();
+    if(!domains) throw new Error("Domains werent found :/")
+
+    customPrompts.showPrompt(
+        "Add record",
+        ` 
+            <div class="error-text" style="display: ${error ? "flex" : "none"}">${error ?? ""}</div>
+            
+            <div class="prompt-form-group">
+                <label class="prompt-label" for="domain">Available Domains</label>
+                <select name="domain" id="domain" style="width: 100%; padding: 8px;background-color: transparent; color: white;outline: none;">
+                ${
+                    domains.map(domain => `<option>${domain}</option>`)
+                }
+                </select>
+            </div>    
+            
+            <div class="prompt-form-group">
+                <label class="prompt-label" for="name">Name</label>
+                <input class="prompt-input" type="text" name="name">
+            </div>
+    
+            <div class="prompt-form-group">
+                <label class="prompt-label" for="password">Content</label>
+                <input class="prompt-input" type="text" name="content">
+            </div>
+            
+            `, // html to display
+        async (values) => { // on submit callback
+            // values are based on the 'name' property of elements
+
+            if(values?.name?.trim()?.length > 0 && values?.content?.trim()?.length > 0){
+                try{
+                    await registerDnsRecord({
+                        email: "your-mom.at",
+                        domain: "lets-yap.online",
+                        name: values?.name?.trim(),
+                        value: values?.content?.trim()
+                    });
+                }
+                catch(error){
+                    console.log(error)
+                    setTimeout(() => {
+                        return registerAccount("You must enter a name and value")
+                    }, 1)
+                }
+            }
+            else{
+                setTimeout(() => {
+                    return registerAccount("You must enter a name and value")
+                }, 1)
+            }
+        },
+        ["Add", null],
+    );
+}
+
+async function removeDnsRecordPrompt({
+    domain = null,
+    name = null,
+                                     } = {}){
+    if(!getSessionId()) return
+    if(!domain) throw new Error("Missing domain")
+    if(!name) throw new Error("Missing record name")
+
+    customPrompts.showConfirm(
+        `Remove record ${name}.${domain}?`,
+        [
+            ["Yes", "indianred"],
+            ["No", "gray"]
+        ],
+        async (values) => { // on submit callback
+            console.log(values)
+
+            if(values === "yes"){
+                await removeDnsRecord({
+                    domain,
+                    name
+                });
+            }
+        },
+    );
 }

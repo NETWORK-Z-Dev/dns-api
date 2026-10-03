@@ -27,6 +27,9 @@ export async function initDatabase(){
                 {name: "email", type: "varchar(500) NOT NULL UNIQUE KEY"},
                 {name: "password", type: "varchar(500) NOT NULL"},
                 {name: "max_subdomains", type: "int NOT NULL DEFAULT 2"},
+                {name: "free_subdomains", type: "int NOT NULL DEFAULT 2"},
+                {name: "price", type: "DECIMAL(10,2) NOT NULL DEFAULT 1.5"},
+                {name: "api_key", type: "text DEFAULT NULL"},
             ]
         },
         {
@@ -37,6 +40,14 @@ export async function initDatabase(){
                 {name: "name", type: "varchar(500) NOT NULL"},
                 {name: "domain", type: "varchar(500) NOT NULL"},
                 {name: "value", type: "varchar(500) NOT NULL"},
+            ]
+        },
+        {
+            name: "domains",
+            columns: [
+                {name: "id", type: "int NOT NULL AUTO_INCREMENT PRIMARY KEY"},
+                {name: "domainName", type: "varchar(500) UNIQUE KEY"},
+                {name: "available", type: "int NOT NULL DEFAULT 0"},
             ]
         }
     ]

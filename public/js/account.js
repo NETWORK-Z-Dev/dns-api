@@ -1,10 +1,10 @@
 async function registerAccount({
-    email = null,
-    password = null,
-                               } = {}){
-    if(!email) throw new Error("Missing email for account registration")
-    if(!password) throw new Error("Missing password for account registration")
-    if(password.lenth < 8) throw new Error("Password length should be at least 8 characters")
+                                   email = null,
+                                   password = null,
+                               } = {}) {
+    if (!email) throw new Error("Missing email for account registration")
+    if (!password) throw new Error("Missing password for account registration")
+    if (password.lenth < 8) throw new Error("Password length should be at least 8 characters")
 
     let result = await fetch("/account/register", {
         method: "POST",
@@ -17,12 +17,12 @@ async function registerAccount({
         })
     })
 
-    if(result.status !== 200){
+    if (result.status !== 200) {
         console.error("Unable to register account", result)
         throw new Error("Unable to register account");
     }
 
-    if(result.status === 200){
+    if (result.status === 200) {
         let login = await loginAccount({
             email,
             password
@@ -35,17 +35,17 @@ async function registerAccount({
     return false;
 }
 
-async function testLogin(){
-    try{
+async function testLogin() {
+    try {
         let accountLoginTest = await getAccount();
         return !accountLoginTest?.error;
-    } catch{
+    } catch {
         return false;
     }
 }
 
-async function getAccount(){
-    if(!getSessionId()) throw new Error("Missing session id for account login")
+async function getAccount() {
+    if (!getSessionId()) throw new Error("Missing session id for account login")
 
     let result = await fetch("/account/", {
         method: "POST",
@@ -58,30 +58,62 @@ async function getAccount(){
     })
 
     let jsonData = null;
-    if(result.status !== 200){
-        try{
+    if (result.status !== 200) {
+        try {
             jsonData = await result.json();
-        } catch {}
+        } catch {
+        }
 
+        console.log(jsonData, result.status);
         console.error("Unable to get account: ", jsonData?.error)
-    }else{
+    } else {
         jsonData = await result.json();
     }
 
-    if(jsonData?.account) {
+    if (jsonData?.account) {
         return jsonData?.account;
     }
 
     return jsonData;
 }
 
-async function loginAccount({
-                                   email = null,
-                                   password = null,
-                               } = {}){
+async function generateAccountApiKey() {
+    if (!getSessionId()) throw new Error("Missing session id for account login")
 
-    if(!email) throw new Error("Missing email for account login")
-    if(!password) throw new Error("Missing password for account login")
+    let result = await fetch("/account/api/generate", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            sessionId: getSessionId()
+        })
+    })
+
+    let jsonData = null;
+    if (result.status !== 200) {
+        try {
+            jsonData = await result.json();
+        } catch {
+        }
+
+        console.log(jsonData, result.status);
+        console.error("Unable to generate api key: ", jsonData?.error)
+    } else {
+        jsonData = await result.json();
+    }
+
+    return jsonData?.key;
+}
+
+async function loginAccount({
+                                email = null,
+                                password = null,
+                                api_key = null,
+                            } = {}) {
+
+    if (!email && !api_key) throw new Error("Missing email for account login")
+    if (!password && !api_key) throw new Error("Missing password for account login")
 
     let result = await fetch("/account/login", {
         method: "POST",
@@ -90,24 +122,26 @@ async function loginAccount({
         },
         body: JSON.stringify({
             email,
-            password
+            password,
+            api_key
         })
     })
 
     let jsonData = null;
-    if(result.status !== 200){
+    if (result.status !== 200) {
         let jsonData = null;
-        try{
+        try {
             jsonData = await result.json();
-        } catch {}
+        } catch {
+        }
 
         console.error("Unable to login account: ", jsonData?.error)
         throw new Error("Login failed:\n" + jsonData?.error ?? null);
-    }else{
+    } else {
         jsonData = await result.json();
     }
 
-    if(jsonData?.uuid) {
+    if (jsonData?.uuid) {
         setSessionId(jsonData.uuid)
         localStorage.setItem("email", email);
         await updateHeaderLinks();
@@ -116,8 +150,8 @@ async function loginAccount({
 }
 
 
-async function registerPrompt(error = null){
-    if(getSessionId()) return
+async function registerPrompt(error = null) {
+    if (getSessionId()) return
 
     customPrompts.showPrompt(
         "Register",
@@ -137,30 +171,27 @@ async function registerPrompt(error = null){
         async (values) => { // on submit callback
             // values are based on the 'name' property of elements
 
-            if(values?.email?.trim()?.length > 0 && values?.password?.trim()?.length > 0){
-                try{
+            if (values?.email?.trim()?.length > 0 && values?.password?.trim()?.length > 0) {
+                try {
                     let register = await registerAccount({
                         email: values.email,
                         password: values.password,
                     });
 
-                    if(register === true){
+                    if (register === true) {
                         // success
-                    }
-                    else{
+                    } else {
                         setTimeout(() => {
                             return registerAccount("Something went wrong during the registration")
                         }, 1)
                     }
-                }
-                catch(error){
+                } catch (error) {
                     console.log(error)
                     setTimeout(() => {
                         return registerAccount("You must enter an email and password")
                     }, 1)
                 }
-            }
-            else{
+            } else {
                 setTimeout(() => {
                     return registerAccount("You must enter an email and password")
                 }, 1)
@@ -170,7 +201,7 @@ async function registerPrompt(error = null){
     );
 }
 
-async function loginPrompt(error = null){
+async function loginPrompt(error = null) {
     customPrompts.showPrompt(
         "Login",
         ` 
@@ -189,29 +220,27 @@ async function loginPrompt(error = null){
         async (values) => { // on submit callback
             // values are based on the 'name' property of elements
 
-           if(values?.email?.trim()?.length > 0 && values?.password?.trim()?.length > 0){
-               try{
-                   let login = await loginAccount({
-                       email: values.email,
-                       password: values.password,
-                   });
+            if (values?.email?.trim()?.length > 0 && values?.password?.trim()?.length > 0) {
+                try {
+                    let login = await loginAccount({
+                        email: values.email,
+                        password: values.password,
+                    });
 
-                   if(login?.uuid){
-                       // success
-                   }
-               }
-               catch(error){
-                   console.log(error)
-                   setTimeout(() => {
-                       return loginPrompt("You must enter an email and password")
-                   }, 1)
-               }
-           }
-           else{
-               setTimeout(() => {
-                   return loginPrompt("You must enter an email and password")
-               }, 1)
-           }
+                    if (login?.uuid) {
+                        // success
+                    }
+                } catch (error) {
+                    console.log(error)
+                    setTimeout(() => {
+                        return loginPrompt("Your login failed")
+                    }, 1)
+                }
+            } else {
+                setTimeout(() => {
+                    return loginPrompt("You must enter an email and password")
+                }, 1)
+            }
         },
         ["Login", null],
     );

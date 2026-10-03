@@ -1,13 +1,6 @@
-import {
-    getAccountFromDb,
-    getIdentifierFromSessionId,
-    getUUID,
-    insertAccountIntoDb,
-    verifyAccount,
-    verifySessionId
-} from "./account.mjs";
+import {getAccountFromDb, getIdentifierFromSessionId, verifySessionId} from "./account.mjs";
 import {db} from "../init/sql.mjs";
-import {starter} from "../init/web.mjs";
+import {maxIpLimit, rateLimitBlockTime, starter, totalReqLimit} from "../init/web.mjs";
 import {addDnsToZone, checkDnsName, getZoneDnsEntry, removeDnsFromZone} from "./cloudflare.mjs";
 import dSyncRateLimit from "@hackthedev/dsync-ratelimit";
 
@@ -40,6 +33,16 @@ export async function getAccountDnsRecords(identifier){
 
     return rows;
 }
+
+export async function getDomains(){
+    let rows = await db.queryDatabase(
+        `SELECT * FROM domains WHERE available=1`,
+        []
+    )
+
+    return rows?.length > 0 ? rows.map(domain => domain.domainName) : [];
+}
+
 
 export async function getAccountDnsRecord(identifier, domain, name){
     if(!identifier) throw new Error("Missing Account identifier")
@@ -92,9 +95,9 @@ export async function deleteAccountDnsRecord(identifier, domain, name){
 
 export async function registerDnsEndpoints(){
     starter.app.post('/dns/register', rateLimiter.middleware({
-            getIpLimit: async () => 5,
-            getTotalLimit: async () => 50,
-            getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
+            getIpLimit: async () => maxIpLimit,
+            getTotalLimit: async () => totalReqLimit,
+            getBlockUntil: async () => rateLimitBlockTime
         }),
         starter.express.json(),
         async (req, res) => {
@@ -127,6 +130,8 @@ export async function registerDnsEndpoints(){
                     await deleteAccountDnsRecord(email, domain, name) // undo on cf error
                     return res.status(500).json({error: "Unable to register dns record"});
                 }
+
+                return res.status(200).json({error: null});
             }
             else{
                 return res.status(400).json({error: "Record already exists!"});
@@ -134,32 +139,35 @@ export async function registerDnsEndpoints(){
         })
 
     starter.app.delete('/dns/delete', rateLimiter.middleware({
-            getIpLimit: async () => 5,
-            getTotalLimit: async () => 50,
-            getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
+            getIpLimit: async () => maxIpLimit,
+            getTotalLimit: async () => totalReqLimit,
+            getBlockUntil: async () => rateLimitBlockTime
         }),
         starter.express.json(),
         async (req, res) => {
-            const {email, sessionId, name, domain} = req?.body;
+            const {sessionId, name, domain} = req?.body;
 
-            if(!email) return res.status(400).json({error: "Email is missing"});
             if(!sessionId) return res.status(400).json({error: "Session is missing"});
             if(!domain) return res.status(400).json({error: "domain is missing"});
+            if(!name) return res.status(400).json({error: "domain is missing"});
 
             let isValid = await verifySessionId(sessionId);
             if(!isValid) return res.status(400).json({error: "Invalid session"});
 
-            let existingRecord = await getAccountDnsRecord(email, domain, name)
-            let existingDnsRecord = await getZoneDnsEntry(domain, name)
+            let sessionEmail = getIdentifierFromSessionId(sessionId);
 
-            console.log(existingRecord, existingDnsRecord)
+
+            let existingRecord = await getAccountDnsRecord(sessionEmail, domain, name)
+            let existingDnsRecord = await getZoneDnsEntry(domain, name)
 
             if(existingRecord?.id || existingDnsRecord?.id) {
                 // local so we know which account is who
-                let regRes = await deleteAccountDnsRecord(email, domain, name)
+                let regRes = await deleteAccountDnsRecord(sessionEmail, domain, name)
 
                 // cloudflare
-                let dnsRecordReg = await removeDnsFromZone(domain, name,)
+                let dnsRecordReg = await removeDnsFromZone(domain, name)
+
+                return res.status(200).json({error: null});
             }
             else{
                 return res.status(400).json({error: "Record not found!"});
@@ -167,9 +175,9 @@ export async function registerDnsEndpoints(){
         })
 
     starter.app.put('/dns/update', rateLimiter.middleware({
-            getIpLimit: async () => 5,
-            getTotalLimit: async () => 50,
-            getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
+            getIpLimit: async () => maxIpLimit,
+            getTotalLimit: async () => totalReqLimit,
+            getBlockUntil: async () => rateLimitBlockTime
         }),
         starter.express.json(),
         async (req, res) => {
@@ -192,9 +200,9 @@ export async function registerDnsEndpoints(){
         })
 
     starter.app.post('/dns/get', rateLimiter.middleware({
-            getIpLimit: async () => 5,
-            getTotalLimit: async () => 50,
-            getBlockUntil: async () => new Date(Date.now() + (5 * 60_000))
+            getIpLimit: async () => maxIpLimit,
+            getTotalLimit: async () => totalReqLimit,
+            getBlockUntil: async () => rateLimitBlockTime
         }),
         starter.express.json(),
         async (req, res) => {
@@ -207,5 +215,21 @@ export async function registerDnsEndpoints(){
             let sessionEmail = getIdentifierFromSessionId(sessionId);
 
             return res.status(200).json({ error: null, records: await getAccountDnsRecords(sessionEmail)})
+        })
+
+    starter.app.post('/dns/domains/get', rateLimiter.middleware({
+            getIpLimit: async () => maxIpLimit,
+            getTotalLimit: async () => totalReqLimit,
+            getBlockUntil: async () => rateLimitBlockTime
+        }),
+        starter.express.json(),
+        async (req, res) => {
+            const {sessionId} = req?.body;
+            if(!sessionId) return res.status(400).json({error: "Session is missing"});
+
+            let isValid = await verifySessionId(sessionId);
+            if(!isValid) return res.status(400).json({error: "Invalid session"});
+
+            return res.status(200).json({ error: null, domains: await getDomains()})
         })
 }

@@ -57,11 +57,15 @@ export async function getDomainZoneInfo(domainName){
 }
 
 export async function getZoneDnsEntry(domain, name){
+    if(!domain) throw new Error("Domain Name required!");
+    if(!name) throw new Error("Missing name for dns name check")
+    name = name.trim().toLowerCase();
+
     let zoneInfo = await getDomainZoneInfo(domain);
     if(!zoneInfo?.id) return null;
 
     let response = await fetch(`${configObj.settings.cloudflare.url}/zones/${zoneInfo.id}/dns_records`, {
-        signal: AbortSignal.timeout(2500),
+        signal: AbortSignal.timeout(5000),
         ...getApiHeader()
     });
     
@@ -100,11 +104,16 @@ export async function getZoneDns(zoneId){
 }
 
 export async function addDnsToZone(domainName, name, value, comment = ""){
+    if(!domainName) throw new Error("Missing domain name")
+    if(!value) throw new Error("Missing value")
+    if(!name) throw new Error("Missing name")
+    name = name.trim().toLowerCase();
+
     let zoneInfo = await getDomainZoneInfo(domainName);
 
     let response = await fetch(`${configObj.settings.cloudflare.url}/zones/${zoneInfo?.id}/dns_records`, {
         method: "POST",
-        signal: AbortSignal.timeout(2500),
+        signal: AbortSignal.timeout(8000),
         ...getApiHeader(),
         body: JSON.stringify({
             name: `${name}.${zoneInfo.name}`,
@@ -141,6 +150,10 @@ export async function addDnsToZone(domainName, name, value, comment = ""){
 
 
 export async function removeDnsFromZone(domainName, name){
+    if(!domainName) throw new Error("Missing domain")
+    if(!name) throw new Error("Missing name")
+    name = name.trim().toLowerCase();
+
     let zoneInfo = await getDomainZoneInfo(domainName);
     let zoneEntry = await getZoneDnsEntry(domainName, name)
 

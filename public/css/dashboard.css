@@ -4,9 +4,17 @@
     --table-padding: 0.5rem 1rem;
 }
 
+.table-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+}
+
 table.dns {
     border-collapse: collapse;
     overflow: hidden;
+    width: 100% !important;
 }
 table.dns td{
     padding: var(--table-padding);
@@ -76,4 +84,23 @@ td.row{
 .dashboard .card p{
     margin: 0;
     font-size: 14px;
+}
+
+span.table-footer{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background-color: #efefef;
+    text-align: center;
+    gap: 1rem;
+
+    padding: 0.5rem;
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+    border-bottom: var(--table-border);
+    border-left: var(--table-border);
+    border-right: var(--table-border);
+    cursor: pointer;
+    user-select: none;
 }

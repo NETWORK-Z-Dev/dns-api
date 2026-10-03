@@ -12,16 +12,20 @@ await startWebServer();
 
 await registerAccountEndpoints();
 await registerDnsEndpoints();
+
+
 /*
 let zone = "lets-yap.online";
-let zoneEntry = await getZoneDnsEntry(zone, "test")
+let sub = "DCTS_OLD"
+let zoneEntry = await getZoneDnsEntry(zone, sub)
 
 if(zoneEntry?.id){
-    let worked = await removeDnsFromZone(zone, "test")
+    let worked = await removeDnsFromZone(zone, sub)
     console.log("removed", worked)
 }
 else{
-    let addRes = await addDnsToZone(zone, "test", "64.133.55.23", "API ACC #134")
+    let addRes = await addDnsToZone(zone, sub, "64.133.55.23", "API ACC #134")
     console.log("added", addRes)
 }
+
 */
