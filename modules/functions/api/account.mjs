@@ -1,7 +1,16 @@
 import {maxIpLimit, rateLimitBlockTime, starter, totalReqLimit} from "../init/web.mjs";
 import dSyncRateLimit from "@hackthedev/dsync-ratelimit";
 import {db} from "../init/sql.mjs";
-import {hash, verify} from "argon2";
+// due to retarded bun crash
+//import {hash, verify} from "argon2";
+const hash = async (password) => Bun.password.hash(password, {
+    algorithm: "argon2id"
+});
+
+const verify = async (hashedPassword, password) => {
+    return Bun.password.verify(password, hashedPassword);
+};
+
 import crypto from "crypto"
 
 const rateLimiter = new dSyncRateLimit();
@@ -102,9 +111,9 @@ export function verifySessionId(sessionId){
 
 export async function registerAccountEndpoints(){
     starter.app.post('/account/register', rateLimiter.middleware({
-        getIpLimit: async () => maxIpLimit,
-        getTotalLimit: async () => totalReqLimit,
-        getBlockUntil: async () => rateLimitBlockTime
+        getIpLimit: async () => maxIpLimit / 2,
+        getTotalLimit: async () => totalReqLimit / 2,
+        getBlockUntil: async () => rateLimitBlockTime * 2
     }),
         starter.express.json(),
         async (req, res) => {

@@ -158,7 +158,7 @@ export async function registerDnsEndpoints(){
 
                 // cloudflare
                 let dnsRecordReg = await addDnsToZone(domain, name, value, `${sessionEmail}`)
-                if(dnsRecordReg?.error !== null) {
+                if(!dnsRecordReg) {
                     await deleteAccountDnsRecord(sessionEmail, domain, name) // undo on cf error
                     return res.status(500).json({error: "Unable to register dns record"});
                 }

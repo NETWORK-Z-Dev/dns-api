@@ -129,11 +129,7 @@ export async function addDnsToZone(domainName, name, value, comment = ""){
         Logger.error(`Unable to set dns for zone ${zoneInfo.id} - ${name}`)
         Logger.error(response.status);
 
-        return {
-            response,
-            error: "Unable to set dns for zone id",
-            zoneId: null,
-        }
+        return false;
     }
 
     let jsonData = await response.json();
