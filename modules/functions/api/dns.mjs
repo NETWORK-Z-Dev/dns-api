@@ -60,6 +60,18 @@ export async function getAccountDnsRecord(identifier, domain, name){
     return rows[0];
 }
 
+export async function checkDnsRecordExistance(domain, name){
+    if(!name) throw new Error("Missing name")
+    if(!domain) throw new Error("Missing domain")
+
+    let rows = await db.queryDatabase(
+        `SELECT * FROM dns WHERE name = ? AND domain = ?`,
+        [name, domain]
+    )
+
+    return rows?.[0]?.accountId ? true : false;
+}
+
 export async function registerAccountDnsRecord(identifier, domain, name, value){
     if(!identifier) throw new Error("Missing Account identifier")
     if(!name) throw new Error("Missing name")
@@ -94,6 +106,25 @@ export async function deleteAccountDnsRecord(identifier, domain, name){
 }
 
 export async function registerDnsEndpoints(){
+    starter.app.get("/ip", rateLimiter.middleware({
+        getIpLimit: async () => maxIpLimit,
+        getTotalLimit: async () => totalReqLimit,
+        getBlockUntil: async () => rateLimitBlockTime
+    }),
+        (req, res) => {
+        let ip = req.socket.remoteAddress;
+
+        if (ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1") {
+            const forwarded = req.headers["x-forwarded-for"];
+
+            if (forwarded) {
+                ip = forwarded.split(",")[0].trim();
+            }
+        }
+
+        res.send(ip);
+    });
+
     starter.app.post('/dns/register', rateLimiter.middleware({
             getIpLimit: async () => maxIpLimit,
             getTotalLimit: async () => totalReqLimit,
@@ -127,7 +158,7 @@ export async function registerDnsEndpoints(){
 
                 // cloudflare
                 let dnsRecordReg = await addDnsToZone(domain, name, value, `${sessionEmail}`)
-                if(dnsRecordReg === false) {
+                if(dnsRecordReg?.error !== null) {
                     await deleteAccountDnsRecord(sessionEmail, domain, name) // undo on cf error
                     return res.status(500).json({error: "Unable to register dns record"});
                 }
@@ -216,6 +247,21 @@ export async function registerDnsEndpoints(){
             let sessionEmail = getIdentifierFromSessionId(sessionId);
 
             return res.status(200).json({ error: null, records: await getAccountDnsRecords(sessionEmail)})
+        })
+
+    starter.app.post('/dns/check', rateLimiter.middleware({
+            getIpLimit: async () => maxIpLimit,
+            getTotalLimit: async () => totalReqLimit,
+            getBlockUntil: async () => rateLimitBlockTime
+        }),
+        starter.express.json(),
+        async (req, res) => {
+            const {domain, name} = req?.body;
+            if(!domain) return res.status(400).json({error: "Domain is missing"});
+            if(!name) return res.status(400).json({error: "Name is missing"});
+
+            let doesExist = await checkDnsRecordExistance(domain, name);
+            return res.status(200).json({ error: null, exists: doesExist})
         })
 
     starter.app.post('/dns/domains/get', rateLimiter.middleware({

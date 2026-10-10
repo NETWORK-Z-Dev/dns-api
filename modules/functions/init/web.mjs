@@ -11,6 +11,23 @@ export let maxIpLimit = 50;
 export let totalReqLimit = 200;
 
 export async function startWebServer(){
+    starter.app.use((req, res, next) => {
+        const origin = req.headers.origin;
+
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Vary", "Origin");
+        res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+        res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+        res.header("Access-Control-Max-Age", "86400");
+        res.set("Cache-Control", "no-store");
+
+        if (req.method === "OPTIONS") {
+            return res.sendStatus(204);
+        }
+
+        next();
+    });
+
     starter.registerErrorHandlers(); 
     starter.registerTemplateMiddleware(); 
     starter.app.use(starter.express.static(starter.dirname + "/public")); 

@@ -202,13 +202,19 @@ async function registerPrompt(error = null) {
 }
 
 async function loginPrompt(error = null) {
+
+    let storedEmail = localStorage.getItem("email");
+    if(storedEmail === "null") storedEmail = ""
+    if(storedEmail === "undefined") storedEmail = ""
+    if(!storedEmail) storedEmail = ""
+
     customPrompts.showPrompt(
         "Login",
         ` 
             <div class="error-text" style="display: ${error ? "flex" : "none"}">${error ?? ""}</div>
             <div class="prompt-form-group">
                 <label class="prompt-label" for="email">Email</label>
-                <input class="prompt-input" type="text" name="email" value="${localStorage.getItem("email") ?? ""}">
+                <input class="prompt-input" type="text" name="email" value="${storedEmail}">
             </div>
     
             <div class="prompt-form-group">
